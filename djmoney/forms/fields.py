@@ -2,7 +2,7 @@ from decimal import Decimal
 from django.utils.translation import ugettext_lazy as _
 from django import forms
 from widgets import InputMoneyWidget
-from moneyed.classes import Money, CURRENCIES, DEFAULT_CURRENCY_CODE
+from djmoney.classes import Money, CURRENCIES, DEFAULT_CURRENCY_CODE
 
 __all__ = ('MoneyField',)
 

@@ -1,8 +1,9 @@
 from django.db import models
 from django.utils.encoding import smart_unicode
 from exceptions import Exception
-from moneyed import Money, Currency, DEFAULT_CURRENCY
-from djmoney import forms
+from djmoney.classes import Money, Currency, DEFAULT_CURRENCY
+# from djmoney import forms
+from djmoney.forms import MoneyField as MoneyFormField
 from djmoney.forms.widgets import CURRENCY_CHOICES
 
 from decimal import Decimal
@@ -13,6 +14,10 @@ __all__ = ('MoneyField', 'currency_field_name', 'NotSupportedLookup')
 currency_field_name = lambda name: "%s_currency" % name
 SUPPORTED_LOOKUPS = ('exact', 'lt', 'gt', 'lte', 'gte')
 
+try:
+    from polymorphic import PolymorphicManager
+except:
+    PolymorphicManager = None
 
 class NotSupportedLookup(Exception):
     def __init__(self, lookup):
@@ -130,11 +135,11 @@ class MoneyField(models.DecimalField):
         return "DecimalField"
 
     def contribute_to_class(self, cls, name):
-        
+
         # Don't run on abstract classes
         if cls._meta.abstract:
             return
-        
+
         c_field_name = currency_field_name(name)
         # Do not change default=self.default_currency.code, needed
         # for south compat.
@@ -151,19 +156,21 @@ class MoneyField(models.DecimalField):
 
         setattr(cls, self.name, MoneyFieldProxy(self))
 
-        from managers import money_manager
-
-        if getattr(cls, '_default_manager', None):
-            cls._default_manager = money_manager(cls._default_manager)
-        else:
-            cls._default_manager = money_manager(models.Manager())
-        cls._default_manager.model = cls
-        
-        if getattr(cls, 'objects', None):
-            cls.objects = money_manager(cls.objects)
-        else:
-            cls.objects = money_manager(models.Manager())
-        cls.objects.model = cls
+        # from managers import money_manager
+        #
+        # if getattr(cls, '_default_manager', None):
+        #     if PolymorphicManager is None or not isinstance(cls._default_manager, PolymorphicManager):
+        #         cls._default_manager = money_manager(cls._default_manager)
+        # else:
+        #     cls._default_manager = money_manager(models.Manager())
+        # cls._default_manager.model = cls
+        #
+        # if getattr(cls, 'objects', None):
+        #     if PolymorphicManager is None or not isinstance(cls.objects, PolymorphicManager):
+        #         cls.objects = money_manager(cls.objects)
+        # else:
+        #     cls.objects = money_manager(models.Manager())
+        # cls.objects.model = cls
 
     def get_db_prep_save(self, value, connection):
         if isinstance(value, Money):
@@ -191,7 +198,7 @@ class MoneyField(models.DecimalField):
             return super(MoneyField, self).get_default()
 
     def formfield(self, **kwargs):
-        defaults = {'form_class': forms.MoneyField}
+        defaults = {'form_class': MoneyFormField}
         defaults.update(kwargs)
         defaults['currency_choices'] = self.currency_choices
         return super(MoneyField, self).formfield(**defaults)

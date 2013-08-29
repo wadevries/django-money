@@ -1,6 +1,6 @@
 from django import forms
 from django.conf import settings
-from moneyed import Money, CURRENCIES, DEFAULT_CURRENCY_CODE
+from djmoney.classes import Money, CURRENCIES, DEFAULT_CURRENCY_CODE
 from decimal import Decimal
 import operator
 
